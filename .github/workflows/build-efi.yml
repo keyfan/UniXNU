@@ -47,7 +47,7 @@ jobs:
       - name: Install EDK II build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential uuid-dev iasl nasm acpica-tools
+          sudo apt-get install -y build-essential uuid-dev iasl nasm acpica-tools llvm lld clang
 
       - name: Select the device
         run: ./unixnu defconfig "${{ inputs.defconfig }}" -D "$GITHUB_WORKSPACE/device"
