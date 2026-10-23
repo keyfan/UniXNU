@@ -1,0 +1,67 @@
+name: Build EFI package
+
+on:
+  workflow_dispatch:
+    inputs:
+      device_repository:
+        description: Device repository as owner/name
+        required: true
+        default: keyfan/UniXNU-enchilada
+      device_ref:
+        description: Device repository ref
+        required: true
+        default: main
+      defconfig:
+        description: Defconfig name (configs/ of the device repository)
+        required: true
+        default: enchilada_defconfig
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out UniXNU
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Check out the device repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.device_repository }}
+          ref: ${{ inputs.device_ref }}
+          path: device
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install EDK II build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential uuid-dev iasl nasm acpica-tools
+
+      - name: Fetch sources
+        run: ./unixnu fetch
+
+      - name: Select the device
+        run: ./unixnu defconfig "${{ inputs.defconfig }}" -D "$GITHUB_WORKSPACE/device"
+
+      - name: Build package
+        run: ./unixnu build package
+
+      - name: Upload EFI binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: unixnu-efi
+          path: out/*/package/Build/Out/*.efi
+          if-no-files-found: error
+          retention-days: 14
