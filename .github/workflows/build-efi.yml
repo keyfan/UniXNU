@@ -62,6 +62,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unixnu-efi
-          path: out/*/package/Build/Out/*.efi
+          path: out/enchilada/package/Build/Out
           if-no-files-found: error
           retention-days: 14
